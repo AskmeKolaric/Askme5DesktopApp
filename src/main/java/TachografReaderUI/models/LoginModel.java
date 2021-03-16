@@ -11,4 +11,12 @@ public class LoginModel implements Serializable {
         this.email = email;
         this.password = password;
     }
+
+    @Override
+    public String toString() {
+        return "LoginModel{" +
+                "email='" + email + '\'' +
+                ", password='" + password + '\'' +
+                '}';
+    }
 }
