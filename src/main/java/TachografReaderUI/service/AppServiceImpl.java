@@ -32,7 +32,7 @@ public class AppServiceImpl implements AppService{
 
         Mono<TokenResponse> webAccessRegistration = webClient.method(HttpMethod.POST)
                 .uri(loginUrl)
-                .body(BodyInserters.fromObject(objectMapper.writeValueAsString(loginModel)))
+                .body(BodyInserters.fromValue(objectMapper.writeValueAsString(loginModel)))
                 .retrieve().bodyToMono(TokenResponse.class);
 
         TokenResponse tokenResponse = webAccessRegistration.block();
