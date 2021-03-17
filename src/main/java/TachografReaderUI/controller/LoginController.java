@@ -21,6 +21,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.reactive.ClientHttpConnector;
+import org.springframework.http.client.reactive.ClientHttpRequest;
+import org.springframework.http.client.reactive.ClientHttpResponse;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
@@ -29,8 +32,10 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.awt.*;
+import java.net.URI;
+import java.util.function.Function;
 
-@Controller
+@RestController
 public class LoginController {
 
     private final AppService appService = new AppServiceImpl();
@@ -67,7 +72,6 @@ public class LoginController {
         }
         clearFields();
     }
-
 
     @FXML
     private void cancel() {

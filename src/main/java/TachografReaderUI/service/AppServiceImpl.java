@@ -9,28 +9,27 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
-@Service
 public class AppServiceImpl implements AppService{
 
-    private final WebClient webClient;
+    private WebClient webClient;
     private final ObjectMapper objectMapper;
     private final String loginUrl = "http://askme5.it/e5pro/api/user/singin";
 
     public AppServiceImpl(){
-        this.webClient =  WebClient.builder()
-                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
-                .build();
         this.objectMapper = new ObjectMapper();
     }
 
     public TokenResponse login(LoginModel loginModel) throws JsonProcessingException {
         objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
+
+        this.webClient =  WebClient.builder()
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
+                .build();
 
         Mono<TokenResponse> webAccessRegistration = webClient.method(HttpMethod.POST)
                 .uri(loginUrl)
