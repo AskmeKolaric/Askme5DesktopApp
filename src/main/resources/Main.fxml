@@ -2,7 +2,7 @@
 
 <?import javafx.scene.layout.BorderPane?>
 
-<BorderPane fx:id="root" xmlns:fx="http://javafx.com/fxml/1" fx:controller="TachografReaderUI.controller.MainController">
+<BorderPane fx:id="root" xmlns:fx="http://javafx.com/fxml" fx:controller="TachografReaderUI.controller.MainController">
     <center>
         <fx:include source="Login.fxml" fx:id="login"/>
     </center>
