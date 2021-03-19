@@ -1,27 +1,17 @@
 package TachografReaderUI.models;
 
+import org.springframework.http.HttpStatus;
+
 import java.io.Serializable;
 
 public class ErrorMessage implements Serializable {
 
-    private String poruka;
     private String message;
+    private HttpStatus status;
 
     public ErrorMessage() {
     }
 
-    public ErrorMessage(String poruka, String message) {
-        this.poruka = poruka;
-        this.message = message;
-    }
-
-    public String getPoruka() {
-        return poruka;
-    }
-
-    public void setPoruka(String poruka) {
-        this.poruka = poruka;
-    }
 
     public String getMessage() {
         return message;
@@ -29,5 +19,13 @@ public class ErrorMessage implements Serializable {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public HttpStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(HttpStatus status) {
+        this.status = status;
     }
 }

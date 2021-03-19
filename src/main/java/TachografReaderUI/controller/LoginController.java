@@ -1,39 +1,18 @@
 package TachografReaderUI.controller;
 
 import TachografReaderUI.models.LoginModel;
-import TachografReaderUI.models.TokenResponse;
 import TachografReaderUI.service.AppService;
 import TachografReaderUI.service.AppServiceImpl;
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
-import TachografReaderUI.User;
-import jdk.jfr.ContentType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.client.reactive.ClientHttpConnector;
-import org.springframework.http.client.reactive.ClientHttpRequest;
-import org.springframework.http.client.reactive.ClientHttpResponse;
-import org.springframework.stereotype.Controller;
+import TachografReaderUI.models.User;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.reactive.function.BodyInserters;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
-
-import java.awt.*;
-import java.net.URI;
-import java.util.function.Function;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 public class LoginController {
@@ -46,9 +25,7 @@ public class LoginController {
         return this.user;
     }
 
-    public final User getUser() {
-        return this.userProperty().get();
-    }
+    private static String email = "maxknn@gmail.com";//TODO move to application.properties
 
     @FXML
     private TextField userNameField;
@@ -60,35 +37,30 @@ public class LoginController {
 
     @FXML
     private void ok() throws JsonProcessingException {
-        String userName = userNameField.getText();
-        String password = passwordField.getText();
-        if (authenticate(userName, password)) {
-            setUser(new User(userName));
-            LoginModel loginModel = new LoginModel("maxknn@gmail.com", "767601");//For testing, should be taken frow the textbox
-            appService.login(loginModel);//perform login
+
+        LoginModel loginModel = new LoginModel(email, passwordField.getText());//For testing,use default value for testing
+        try {
+            String tokenResponse = appService.login(loginModel);
+            System.out.println("TOKEN: " + tokenResponse);//perform login
+            setUser(new User(userNameField.getText()));
             errorLabel.setText("");
-        } else {
-            errorLabel.setText("Incorrect login details");
+            //TODO check tokens!
+        } catch (ResponseStatusException e) {
+            //catch if there is error by login and set error message
+            setUser(null);
+            System.out.println(e.getMessage());
+            errorLabel.setText(e.getMessage());
         }
-        clearFields();
+        clearAllFields();
     }
 
     @FXML
     private void cancel() {
-        setUser(null);
-        clearFields();
+        clearAllFields();
         errorLabel.setText("");
     }
 
-    private boolean authenticate(String userName, String password) {
-        // in real life, do real authentication...
-        if (userName.isEmpty() || password.isEmpty()) {
-            return false;
-        }
-        return true;
-    }
-
-    private void clearFields() {
+    public void clearAllFields(){
         userNameField.setText("");
         passwordField.setText("");
     }
@@ -96,4 +68,5 @@ public class LoginController {
     public final void setUser(final User user) {
         this.userProperty().set(user);
     }
+
 }

@@ -1,10 +1,9 @@
 package TachografReaderUI.controller;
 
-import TachografReaderUI.User;
+import TachografReaderUI.models.User;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
 
@@ -12,17 +11,13 @@ import TachografReaderUI.file.FileDDD;
 import TachografReaderUI.file.driverCardBlock.subBlocks.APDUCommand;
 import TachografReaderUI.models.Fid;
 import TachografReaderUI.utils.OperationHelper;
-import javafx.scene.layout.BorderPane;
 
 import javax.smartcardio.*;
-import javax.swing.*;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.List;
-
-import static TachografReaderUI.CardReader.text;
 
 public class DataViewController {
 

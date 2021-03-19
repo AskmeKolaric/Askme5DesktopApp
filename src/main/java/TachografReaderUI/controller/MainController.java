@@ -26,15 +26,15 @@ public class MainController {
         loginController.userProperty().addListener((obs, oldUser, newUser) -> {
             if (newUser == null) {
                 root.setCenter(login);
-                root.getScene().getWindow().sizeToScene();
             } else {
                 if (mainView == null) {
                     loadMainView();
                 }
                 root.setCenter(mainView);
-                root.getScene().getWindow().sizeToScene();
             }
+            root.getScene().getWindow().sizeToScene();
         });
+        loginController.clearAllFields();
     }
 
     private void loadMainView() {
