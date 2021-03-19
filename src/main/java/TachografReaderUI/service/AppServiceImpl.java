@@ -36,8 +36,6 @@ public class AppServiceImpl implements AppService{
                 .body(BodyInserters.fromValue(objectMapper.writeValueAsString(loginModel)))
                 .retrieve().bodyToMono(TokenResponse.class);
 
-        TokenResponse tokenResponse = webAccessRegistration.block();
-
-        return tokenResponse;
+        return webAccessRegistration.block();
     }
 }
