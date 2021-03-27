@@ -29,7 +29,7 @@ public class Main extends Application {
     public void start(Stage primaryStage) throws Exception{
 
         try {
-            URL url = new File("src/main/resources/Main.fxml").toURI().toURL();
+            URL url = new File("src/main/java/TachografReaderUi/Main.fxml").toURI().toURL();
             Parent root = FXMLLoader.load(url);
             Scene scene = new Scene(root, 800, 575);
             URL url2 = new File("src/main/resources/application.css").toURI().toURL();

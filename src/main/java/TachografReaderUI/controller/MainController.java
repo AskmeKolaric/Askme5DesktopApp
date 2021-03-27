@@ -39,7 +39,7 @@ public class MainController {
 
     private void loadMainView() {
         try {
-            URL urlDataView = new File("src/main/resources/DataView.fxml").toURI().toURL();
+            URL urlDataView = new File("src/main/java/TachografReaderUi/DataView.fxml").toURI().toURL();
             FXMLLoader loader = new FXMLLoader(urlDataView);
             mainView = loader.load();
             DataViewController controller = loader.getController();

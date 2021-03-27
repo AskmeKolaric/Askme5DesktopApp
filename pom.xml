@@ -94,10 +94,37 @@
 				<groupId>org.openjfx</groupId>
 				<artifactId>javafx-maven-plugin</artifactId>
 				<version>0.0.5</version>
-				<!--<configuration>
-					<mainClass>hellofx/org.openjfx.App</mainClass>
-				</configuration>-->
 			</plugin>
+
+			<!-- .exe generation -->
+			<plugin>
+				<groupId>com.akathist.maven.plugins.launch4j</groupId>
+				<artifactId>launch4j-maven-plugin</artifactId>
+				<version>1.7.21</version>
+				<executions>
+					<execution>
+						<id>l4j-pampass</id>
+						<phase>package</phase>
+						<goals>
+							<goal>launch4j</goal>
+						</goals>
+						<configuration>
+							<headerType>console</headerType>
+							<jar>${project.build.directory}/${project.build.finalName}.${project.packaging}</jar>
+							<downloadUrl>http://java.com/download</downloadUrl>
+							<classPath>
+								<mainClass>org.springframework.boot.loader.JarLauncher</mainClass>
+							</classPath>
+							<jre>
+								<path>${java.home}</path>
+								<bundledJre64Bit>true</bundledJre64Bit>
+								<runtimeBits>64</runtimeBits>
+							</jre>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
 		</plugins>
 	</build>
 
