@@ -1,6 +1,8 @@
 package TachografReaderUI.controller;
 
 import TachografReaderUI.models.User;
+import TachografReaderUI.service.AppService;
+import TachografReaderUI.service.AppServiceImpl;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
@@ -60,6 +62,8 @@ public class DataViewController {
     public Button dugme;
     public Label text;
 
+    private final AppService appService = new AppServiceImpl();
+
 
     public void initialize() throws CardException {
         try {
@@ -75,7 +79,7 @@ public class DataViewController {
             channel = card.getBasicChannel();
             text.setText("Card: " + card);
             dugme.setDisable(false);
-        // establish a connection with the card
+            // establish a connection with the card
         } else {
             text.setText("Card is not present");
             textField.setText("Please connect your card Reader");
@@ -101,7 +105,7 @@ public class DataViewController {
             text.setText(fid.name());
             boolean empty = false;
             System.out.println(fid.getId());
-            if(!fid.getId().equals("3f,00") && !fid.getId().equals("05,00")){
+            if (!fid.getId().equals("3f,00") && !fid.getId().equals("05,00")) {
                 switch (fid.getId()) {
                     case "00,02":
                         channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
@@ -143,27 +147,28 @@ public class DataViewController {
                     case "05,02":
                         channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
                         performHashFile(r, channel);
-                        b = readSelectedFile(channel, noOfEventsPerType*24*6);
+                        b = readSelectedFile(channel, noOfEventsPerType * 24 * 6);
                         break;
                     case "05,03":
                         channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
                         performHashFile(r, channel);
-                        b = readSelectedFile(channel, noOfFaultsPerType*24*2);
+                        b = readSelectedFile(channel, noOfFaultsPerType * 24 * 2);
                         break;
                     case "05,04":
                         channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
                         performHashFile(r, channel);
-                        b = readSelectedFile(channel, activityStructureLength+4);
+                        b = readSelectedFile(channel, activityStructureLength + 4);
                         break;
                     case "05,05":
                         channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
                         performHashFile(r, channel);
-                        b = readSelectedFile(channel, noOfCardVehicleRecords*31+2);
+                        b = readSelectedFile(channel, noOfCardVehicleRecords * 31 + 2);
                         break;
                     case "05,06":
-                        channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));;
+                        channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
+                        ;
                         performHashFile(r, channel);
-                        b = readSelectedFile(channel, noOfCardPlaceRecords*10+1);
+                        b = readSelectedFile(channel, noOfCardPlaceRecords * 10 + 1);
                         break;
                     case "05,07":
                         channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
@@ -197,7 +202,7 @@ public class DataViewController {
 
 //                        // add signature file
                 if (!fid.getId().equals("00,02") && !fid.getId().equals("00,05")
-                        && !fid.getId().equals("C1,00") && !fid.getId().equals("C1,08")){
+                        && !fid.getId().equals("C1,00") && !fid.getId().equals("C1,08")) {
 
                     b = signature(r, channel);
                     sizeByte = ByteBuffer.allocate(4).putInt(b.length).array();
@@ -213,9 +218,10 @@ public class DataViewController {
             }
 
         }
-        try{
+        try {
             time = Calendar.getInstance().getTimeInMillis();
             fileDDD = new FileDDD(fileTGD.toByteArray());
+
             String result = fileDDD.getJson();
             System.out.println(result);
 
@@ -223,14 +229,23 @@ public class DataViewController {
 
             fileName = fileName.replace(" ", "");
 
-            String desktop = System.getProperty ("user.home") + "/Desktop/Taho/";
-            File file = new File( desktop + fileName);
+            String desktop = System.getProperty("user.home") + "/Desktop/Taho/";
+            File file = new File(desktop + fileName);
+
+            //TODO check where the request should happen!?
+            appService.uploadFile(
+                    "Marko-Test-Askme5", //todo check where this is initialized
+                    fileDDD.getCardBlockFile().getIdentification().getCardNumber().toString(),//TODO check card numer
+                    dateFormat.format(time),
+                    file); // TODO test this!?
+
             OutputStream stream = new FileOutputStream(file);
-            saveFileAddLastDownload(channel,fileTGD, r,time, stream);
-        } catch (Exception e){
+            saveFileAddLastDownload(channel, fileTGD, r, time, stream);
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
     private void saveFileAddLastDownload(CardChannel channel, ByteArrayOutputStream output, ResponseAPDU r, long time, OutputStream stream) {
         byte[] timeHex = getTimestampBytes(time);
 
@@ -238,8 +253,8 @@ public class DataViewController {
             r = channel.transmit(new CommandAPDU(0x00, 0xA4, 0x04, 0x0C, OperationHelper.hexToByteAr("ff,54,41,43,48,4f"), 0x00, 0x06));
             r = channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr("05,0E"), 0x00, 0x02));
             if (r.getSW1() == 0x90) {
-                r = channel.transmit(new CommandAPDU(0x00, APDUCommand.UPDATE_BINARY.getCommand(),0x00,0x00, timeHex,0x00,0x04 ));
-                if (r.getSW1() == 0x90){
+                r = channel.transmit(new CommandAPDU(0x00, APDUCommand.UPDATE_BINARY.getCommand(), 0x00, 0x00, timeHex, 0x00, 0x04));
+                if (r.getSW1() == 0x90) {
                     try {
                         output.writeTo(stream);
                         System.out.print("NIce job \n");
@@ -248,7 +263,7 @@ public class DataViewController {
                     }
                 }
             }
-        }  catch (CardException e1) {
+        } catch (CardException e1) {
             e1.printStackTrace();
         }
     }
@@ -340,7 +355,7 @@ public class DataViewController {
 
             idFileOut.write(rspLen.getData());
             lengthInt -= restLength;
-            if(lengthInt == 0) {
+            if (lengthInt == 0) {
                 end = false;
             }
         } while (end);

@@ -7,14 +7,6 @@ public class SuccessMessage implements Serializable {
     private String poruka;
     private String message;
 
-    public SuccessMessage() {
-    }
-
-    public SuccessMessage(String poruka, String message) {
-        this.poruka = poruka;
-        this.message = message;
-    }
-
     public String getPoruka() {
         return poruka;
     }
