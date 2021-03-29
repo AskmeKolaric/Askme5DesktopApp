@@ -37,6 +37,8 @@ public class AppServiceImpl implements AppService {
     private final String loginUrl = "http://askme5.it/e5pro/api/user/singin";
     private final String postUrl = "http://askme5.it/e5pro/api/ddd";
 
+    private String token = "";
+
     public AppServiceImpl() {
         this.objectMapper = new ObjectMapper();
         objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
@@ -61,7 +63,9 @@ public class AppServiceImpl implements AppService {
                 )
                 .bodyToMono(TokenResponse.class);
 
-        return Objects.requireNonNull(webAccessRegistration.block()).getToken();
+        this.token = Objects.requireNonNull(webAccessRegistration.block()).getToken();
+
+        return token;
     }
 
     @Override
@@ -72,6 +76,7 @@ public class AppServiceImpl implements AppService {
                 .build();
         Mono<SuccessMessage> successMessageMono = webClient.post()
                 .uri(postUrl)
+                .headers(httpHeaders -> httpHeaders.setBearerAuth(token))
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .body(BodyInserters.fromMultipartData(fromFile(name, cardNumber, date, file)))
                 .retrieve()
