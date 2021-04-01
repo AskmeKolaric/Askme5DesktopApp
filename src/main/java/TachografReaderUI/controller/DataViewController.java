@@ -1,20 +1,28 @@
 package TachografReaderUI.controller;
 
+import TachografReaderUI.file.FileDDD;
+import TachografReaderUI.models.TokenResponse;
+import TachografReaderUI.subBlocks.APDUCommand;
+import TachografReaderUI.models.Fid;
 import TachografReaderUI.models.User;
 import TachografReaderUI.service.AppService;
 import TachografReaderUI.service.AppServiceImpl;
+import TachografReaderUI.utils.OperationHelper;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.Parent;
-import javafx.scene.control.*;
-
-import TachografReaderUI.file.FileDDD;
-import TachografReaderUI.file.driverCardBlock.subBlocks.APDUCommand;
-import TachografReaderUI.models.Fid;
-import TachografReaderUI.utils.OperationHelper;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
+import javafx.scene.control.TextField;
 
 import javax.smartcardio.*;
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
+import okhttp3.MediaType;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
@@ -25,7 +33,7 @@ public class DataViewController {
 
     private Parent login;
 
-    private final ObjectProperty<User> user = new SimpleObjectProperty<>();
+    private final ObjectProperty<User> user = new SimpleObjectProperty();
 
     public final ObjectProperty<User> userProperty() {
         return this.user;
@@ -57,7 +65,8 @@ public class DataViewController {
     String fileName;
     SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmm");
 
-    public ProgressBar progressBar;
+    @FXML
+    public ProgressBar bar;
     public TextField textField;
     public Button dugme;
     public Label text;
@@ -66,24 +75,29 @@ public class DataViewController {
 
 
     public void initialize() throws CardException {
-        try {
-            terminals = factory.terminals().list();
-        } catch (CardException e1) {
-            text.setText(e1.getMessage());
-        }
-        System.out.println("Terminals: " + terminals);
-        // get the first terminal
-        if (terminals.size() > 1) {
-            terminal = terminals.get(0);
-            card = terminal.connect("*");
-            channel = card.getBasicChannel();
-            text.setText("Card: " + card);
-            dugme.setDisable(false);
-            // establish a connection with the card
-        } else {
-            text.setText("Card is not present");
-            textField.setText("Please connect your card Reader");
-        }
+//        try {
+//            terminals = factory.terminals().list();
+//        } catch (CardException e1) {
+//            text.setText(e1.getMessage());
+//        }
+//        System.out.println("Terminals: " + terminals);
+//        // get the first terminal
+//        if (terminals.size() >= 1) {
+//            terminal = terminals.get(0);
+//            try {
+//                card = terminal.connect("*");
+//            } catch (CardException e1) {
+//                text.setText(e1.getMessage());
+//                e1.printStackTrace();
+//            }
+//            channel = card.getBasicChannel();
+//            text.setText("Card: " + card);
+//            dugme.setDisable(false);
+//            // establish a connection with the card
+//        } else {
+//            text.setText("Card is not present");
+//            textField.setText("Please connect your card Reader");
+//        }
     }
 
     @FXML
@@ -93,160 +107,174 @@ public class DataViewController {
     }
 
     @FXML
+    public void  testSendFile() throws JsonProcessingException {
+        File file = new File("/Users/askme5/IdeaProjects/Askme5DesktopApp/src/main/resources/ASKmE5_C_20210329_1337_M_KOLARIC_SRB0000036022000.ddd");
+        byte[] bytes = new byte[(int) file.length()];
+        RequestBody name = RequestBody.create(MediaType.parse("text/plain"),"Marko-Test-Askme5");
+        RequestBody cardNumber = RequestBody.create(MediaType.parse("text/plain"), "54637281");
+        RequestBody  date = RequestBody.create(MediaType.parse("text/plain"), "2021.04.01");
+        appService.uploadFile(
+                name, //todo check where this is initialized
+                cardNumber,//TODO check card numer
+                date,
+                convertFile("ddd", bytes), user.get().getUserToken());
+    }
+
+    @FXML
     public void readTachografCard() throws Exception {
 
         byte[] headerBlock = new byte[5];
-        byte[] b = null;
         ResponseAPDU r = null;
-
         ByteArrayOutputStream fileTGD = new ByteArrayOutputStream();
-        for (Fid fid : Fid.values()) {
-            progressBar.setProgress(progressBar.getProgress() + 1);
-            text.setText(fid.name());
-            boolean empty = false;
-            System.out.println(fid.getId());
-            if (!fid.getId().equals("3f,00") && !fid.getId().equals("05,00")) {
-                switch (fid.getId()) {
-                    case "00,02":
-                        channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
-                        b = readSelectedFileOnce(channel, 25);
-                        break;
-                    case "00,05":
-                        channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
-                        b = readSelectedFileOnce(channel, 8);
-                        break;
-                    case "05,01":
-                        channel.transmit(new CommandAPDU(0x00, 0xA4, 0x04, 0x0C, OperationHelper.hexToByteAr("ff,54,41,43,48,4f"), 0x00, 0x06));
-                        channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
-                        performHashFile(r, channel);
-                        b = readSelectedFileOnce(channel, 10);
-                        break;
-                    case "C1,00":
-                        channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
-                        b = readSelectedFileOnce(channel, 194);
-                        break;
-                    case "C1,08":
-                        channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
-                        b = readSelectedFileOnce(channel, 194);
-                        break;
-                    case "05,20":
-                        channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
-                        performHashFile(r, channel);
-                        b = readSelectedFileOnce(channel, 143);
-                        break;
-                    case "05,0E":
-                        channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
-                        performHashFile(r, channel);
-                        b = readSelectedFileOnce(channel, 4);
-                        break;
-                    case "05,21":
-                        channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
-                        performHashFile(r, channel);
-                        b = readSelectedFileOnce(channel, 53);
-                        break;
-                    case "05,02":
-                        channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
-                        performHashFile(r, channel);
-                        b = readSelectedFile(channel, noOfEventsPerType * 24 * 6);
-                        break;
-                    case "05,03":
-                        channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
-                        performHashFile(r, channel);
-                        b = readSelectedFile(channel, noOfFaultsPerType * 24 * 2);
-                        break;
-                    case "05,04":
-                        channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
-                        performHashFile(r, channel);
-                        b = readSelectedFile(channel, activityStructureLength + 4);
-                        break;
-                    case "05,05":
-                        channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
-                        performHashFile(r, channel);
-                        b = readSelectedFile(channel, noOfCardVehicleRecords * 31 + 2);
-                        break;
-                    case "05,06":
-                        channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
-                        ;
-                        performHashFile(r, channel);
-                        b = readSelectedFile(channel, noOfCardPlaceRecords * 10 + 1);
-                        break;
-                    case "05,07":
-                        channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
-                        performHashFile(r, channel);
-                        b = readSelectedFile(channel, 19);
-                        break;
-                    case "05,08":
-                        channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
-                        performHashFile(r, channel);
-                        b = readSelectedFile(channel, 46);
-                        break;
-                    case "05,22":
-                        channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
-                        performHashFile(r, channel);
-                        b = readSelectedFile(channel, 280);
-                        break;
-                }
+
+        Task<Void> task = new Task<Void>() {
+            byte[] b = null;
+            @Override
+            protected Void call() throws Exception {
+                Fid[] values = Fid.values();
+                for (int i = 0, valuesLength = values.length; i < valuesLength; i++) {
+                    Fid fid = values[i];
+                    boolean empty = false;
+                    System.out.println(fid.getId());
+                    if (!fid.getId().equals("3f,00") && !fid.getId().equals("05,00")) {
+                        switch (fid.getId()) {
+                            case "00,02":
+                                channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
+                                b = readSelectedFileOnce(channel, 25);
+                                break;
+                            case "00,05":
+                                channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
+                                b = readSelectedFileOnce(channel, 8);
+                                break;
+                            case "05,01":
+                                channel.transmit(new CommandAPDU(0x00, 0xA4, 0x04, 0x0C, OperationHelper.hexToByteAr("ff,54,41,43,48,4f"), 0x00, 0x06));
+                                channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
+                                performHashFile(r, channel);
+                                b = readSelectedFileOnce(channel, 10);
+                                break;
+                            case "C1,00":
+                                channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
+                                b = readSelectedFileOnce(channel, 194);
+                                break;
+                            case "C1,08":
+                                channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
+                                b = readSelectedFileOnce(channel, 194);
+                                break;
+                            case "05,20":
+                                channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
+                                performHashFile(r, channel);
+                                b = readSelectedFileOnce(channel, 143);
+                                break;
+                            case "05,0E":
+                                channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
+                                performHashFile(r, channel);
+                                b = readSelectedFileOnce(channel, 4);
+                                break;
+                            case "05,21":
+                                channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
+                                performHashFile(r, channel);
+                                b = readSelectedFileOnce(channel, 53);
+                                break;
+                            case "05,02":
+                                channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
+                                performHashFile(r, channel);
+                                b = readSelectedFile(channel, noOfEventsPerType * 24 * 6);
+                                break;
+                            case "05,03":
+                                channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
+                                performHashFile(r, channel);
+                                b = readSelectedFile(channel, noOfFaultsPerType * 24 * 2);
+                                break;
+                            case "05,04":
+                                channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
+                                performHashFile(r, channel);
+                                b = readSelectedFile(channel, activityStructureLength + 4);
+                                break;
+                            case "05,05":
+                                channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
+                                performHashFile(r, channel);
+                                b = readSelectedFile(channel, noOfCardVehicleRecords * 31 + 2);
+                                break;
+                            case "05,06":
+                                channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
+                                ;
+                                performHashFile(r, channel);
+                                b = readSelectedFile(channel, noOfCardPlaceRecords * 10 + 1);
+                                break;
+                            case "05,07":
+                                channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
+                                performHashFile(r, channel);
+                                b = readSelectedFile(channel, 19);
+                                break;
+                            case "05,08":
+                                channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
+                                performHashFile(r, channel);
+                                b = readSelectedFile(channel, 46);
+                                break;
+                            case "05,22":
+                                channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr(fid.getId()), 0x00, 0x02));
+                                performHashFile(r, channel);
+                                b = readSelectedFile(channel, 280);
+                                break;
+                        }
 
 //                empty = isByteArrayEmpty(b);
 //
 //                if (!empty) {
-                byte[] htba = OperationHelper.hexToByteAr(fid.getId());
-                byte[] sizeByte = ByteBuffer.allocate(4).putInt(b.length).array();
-                headerBlock[0] = htba[0];       // id file byte 1
-                headerBlock[1] = htba[1];       // id file byte 2
-                headerBlock[2] = 0;             // tipy file data
-                headerBlock[3] = sizeByte[2];   // size file byte 1
-                headerBlock[4] = sizeByte[3];   // size file byte 2
-                fileTGD.write(headerBlock);
-                fileTGD.write(b);
+                        byte[] htba = OperationHelper.hexToByteAr(fid.getId());
+                        byte[] sizeByte = ByteBuffer.allocate(4).putInt(b.length).array();
+                        headerBlock[0] = htba[0];       // id file byte 1
+                        headerBlock[1] = htba[1];       // id file byte 2
+                        headerBlock[2] = 0;             // tipy file data
+                        headerBlock[3] = sizeByte[2];   // size file byte 1
+                        headerBlock[4] = sizeByte[3];   // size file byte 2
+                        fileTGD.write(headerBlock);
+                        fileTGD.write(b);
 
 //                        // add signature file
-                if (!fid.getId().equals("00,02") && !fid.getId().equals("00,05")
-                        && !fid.getId().equals("C1,00") && !fid.getId().equals("C1,08")) {
+                        if (!fid.getId().equals("00,02") && !fid.getId().equals("00,05")
+                                && !fid.getId().equals("C1,00") && !fid.getId().equals("C1,08")) {
 
-                    b = signature(r, channel);
-                    sizeByte = ByteBuffer.allocate(4).putInt(b.length).array();
-                    headerBlock[0] = htba[0];
-                    headerBlock[1] = htba[1];
-                    headerBlock[2] = 1;
-                    headerBlock[3] = sizeByte[2];
-                    headerBlock[4] = sizeByte[3];
-                    fileTGD.write(headerBlock);
-                    fileTGD.write(b);
-                }
+                            b = signature(r, channel);
+                            sizeByte = ByteBuffer.allocate(4).putInt(b.length).array();
+                            headerBlock[0] = htba[0];
+                            headerBlock[1] = htba[1];
+                            headerBlock[2] = 1;
+                            headerBlock[3] = sizeByte[2];
+                            headerBlock[4] = sizeByte[3];
+                            fileTGD.write(headerBlock);
+                            fileTGD.write(b);
+
+                        }
 //                    }
+                    }
+
+                    updateProgress(i, valuesLength);
+                    updateMessage(Fid.values()[i].toString());
+
+                    if (fid.getId().equals("05,22")) {
+                        saveFileAddLastDownload(channel, fileTGD, r);
+                    }
+                }
+
+                return null;
             }
+        };
+        dugme.setDisable(true);
+//        bar.progressProperty().bind(task.progressProperty());
+        text.textProperty().bind(task.messageProperty());
+        new Thread(task).start();
 
-        }
-        try {
-            time = Calendar.getInstance().getTimeInMillis();
-            fileDDD = new FileDDD(fileTGD.toByteArray());
-
-            String result = fileDDD.getJson();
-            System.out.println(result);
-
-            fileName = "ASKmE5_C_" + dateFormat.format(time) + "_" + fileDDD.getCardBlockFile().getIdentification().getDriverCardHolderIdentification().getCardHolderName().getHolderFirstNames().charAt(0) + "_" + fileDDD.getCardBlockFile().getIdentification().getDriverCardHolderIdentification().getCardHolderName().getHolderSurname() + "_" + fileDDD.getCardBlockFile().getIdentification().getCardNumber().toString() + ".ddd";
-
-            fileName = fileName.replace(" ", "");
-
-            String desktop = System.getProperty("user.home") + "/Desktop/Taho/";
-            File file = new File(desktop + fileName);
-
-            //TODO check where the request should happen!?
-            appService.uploadFile(
-                    "Marko-Test-Askme5", //todo check where this is initialized
-                    fileDDD.getCardBlockFile().getIdentification().getCardNumber().toString(),//TODO check card numer
-                    dateFormat.format(time),
-                    file); // TODO test this!?
-
-            OutputStream stream = new FileOutputStream(file);
-            saveFileAddLastDownload(channel, fileTGD, r, time, stream);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
-    private void saveFileAddLastDownload(CardChannel channel, ByteArrayOutputStream output, ResponseAPDU r, long time, OutputStream stream) {
+    private void saveFileAddLastDownload(CardChannel channel, ByteArrayOutputStream output, ResponseAPDU r) throws Exception {
+        time = Calendar.getInstance().getTimeInMillis();
+        fileDDD = new FileDDD(output.toByteArray());
+
+        fileName = "ASKmE5_C_" + dateFormat.format(time) + "_" + fileDDD.getCardBlockFile().getIdentification().getDriverCardHolderIdentification().getCardHolderName().getHolderFirstNames().charAt(0) + "_" + fileDDD.getCardBlockFile().getIdentification().getDriverCardHolderIdentification().getCardHolderName().getHolderSurname() + "_" + fileDDD.getCardBlockFile().getIdentification().getCardNumber().toString() + ".ddd";
+
+        fileName = fileName.replace(" ", "");
+
         byte[] timeHex = getTimestampBytes(time);
 
         try {
@@ -255,17 +283,39 @@ public class DataViewController {
             if (r.getSW1() == 0x90) {
                 r = channel.transmit(new CommandAPDU(0x00, APDUCommand.UPDATE_BINARY.getCommand(), 0x00, 0x00, timeHex, 0x00, 0x04));
                 if (r.getSW1() == 0x90) {
-                    try {
+                    String desktop = System.getProperty("user.home") + "/Desktop";
+                    File myDirectory = new File(desktop + File.separator + "Tahograf");
+                    if (!myDirectory.exists() && !myDirectory.isDirectory()) {
+                        if (myDirectory.mkdirs()) {
+                            File file = new File(myDirectory + File.separator + fileName);
+                            OutputStream stream = new FileOutputStream(file);
+                            output.writeTo(stream);
+                            System.out.print("NIce job -> Directory \n");
+                            }
+                        }
+                    else {
+                        File file = new File(myDirectory + File.separator + fileName);
+                        OutputStream stream = new FileOutputStream(file);
                         output.writeTo(stream);
-                        System.out.print("NIce job \n");
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                        System.out.print("NIce job -> Vec Ima Directory \n");
                     }
+                    //TODO check where the request should happen!?
+//                    appService.uploadFile(
+//                            "Marko-Test-Askme5", //todo check where this is initialized
+//                            fileDDD.getCardBlockFile().getIdentification().getCardNumber().toString(),//TODO check card numer
+//                            dateFormat.format(time),
+//                            convertFile(fileName , output.toByteArray()),
+//                            user.get().getUserToken());
                 }
             }
         } catch (CardException e1) {
             e1.printStackTrace();
         }
+    }
+
+    public static MultipartBody.Part convertFile(String name, byte[] b) {
+        RequestBody requestBody = RequestBody.create(MediaType.parse("application/x-www-form-urlencoded"), b);
+        return MultipartBody.Part.createFormData("ddd", name, requestBody);
     }
 
     private boolean isByteArrayEmpty(byte[] array) {

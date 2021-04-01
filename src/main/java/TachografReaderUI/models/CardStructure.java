@@ -10,7 +10,7 @@ public class CardStructure {
     }
 
     public HashMap<String, String> getStructure() {
-        structure = new HashMap<>();
+        structure = new HashMap();
         structure.put("00,02", "Card ICC identification");
         structure.put("00,05", "Card chip identification");
         structure.put("05,01", "Application identification");

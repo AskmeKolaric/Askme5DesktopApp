@@ -1,6 +1,7 @@
 package TachografReaderUI.controller;
 
 import TachografReaderUI.models.LoginModel;
+import TachografReaderUI.models.TokenResponse;
 import TachografReaderUI.service.AppService;
 import TachografReaderUI.service.AppServiceImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -27,6 +28,8 @@ public class LoginController {
 
     private static String email = "maxknn@gmail.com";//TODO move to application.properties
 
+    public DataViewController dataViewController;
+
     @FXML
     private TextField userNameField;
     @FXML
@@ -40,9 +43,9 @@ public class LoginController {
 
         LoginModel loginModel = new LoginModel(email, passwordField.getText());//For testing,use default value for testing
         try {
-            String tokenResponse = appService.login(loginModel);
-            System.out.println("TOKEN: " + tokenResponse);//perform login
-            setUser(new User(userNameField.getText()));
+            String token = appService.login(loginModel);
+            System.out.println("TOKEN: " + token);//perform login
+            setUser(new User(userNameField.getText(), token));
             errorLabel.setText("");
             //TODO check tokens!
         } catch (ResponseStatusException e) {
