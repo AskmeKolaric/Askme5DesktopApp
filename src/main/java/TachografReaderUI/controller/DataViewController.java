@@ -1,6 +1,7 @@
 package TachografReaderUI.controller;
 
 import TachografReaderUI.file.FileDDD;
+import TachografReaderUI.models.SuccessMessage;
 import TachografReaderUI.models.TokenResponse;
 import TachografReaderUI.subBlocks.APDUCommand;
 import TachografReaderUI.models.Fid;
@@ -108,16 +109,16 @@ public class DataViewController {
 
     @FXML
     public void  testSendFile() throws JsonProcessingException {
-        File file = new File("/Users/askme5/IdeaProjects/Askme5DesktopApp/src/main/resources/ASKmE5_C_20210329_1337_M_KOLARIC_SRB0000036022000.ddd");
-        byte[] bytes = new byte[(int) file.length()];
-        RequestBody name = RequestBody.create(MediaType.parse("text/plain"),"Marko-Test-Askme5");
-        RequestBody cardNumber = RequestBody.create(MediaType.parse("text/plain"), "54637281");
-        RequestBody  date = RequestBody.create(MediaType.parse("text/plain"), "2021.04.01");
-        appService.uploadFile(
-                name, //todo check where this is initialized
-                cardNumber,//TODO check card numer
-                date,
-                convertFile("ddd", bytes), user.get().getUserToken());
+        File file = new File("ASKmE5_C_20210324_0648_M_KOLARIC_SRB0000036022000.ddd");
+        SuccessMessage response = appService.uploadFile(
+                "Marko-Test-Askme5", //todo check where this is initialized
+                "54637281",//TODO check card numer
+                "2021.04.01",
+                file,
+                user.get().getUserToken());
+
+        System.out.println("Message: " + response.getMessage());
+
     }
 
     @FXML
