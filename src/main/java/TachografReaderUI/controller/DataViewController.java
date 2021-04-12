@@ -24,8 +24,13 @@ import javax.smartcardio.*;
 import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
 import okhttp3.MediaType;
+import org.springframework.core.io.ClassPathResource;
+
 import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.List;
@@ -108,8 +113,8 @@ public class DataViewController {
     }
 
     @FXML
-    public void  testSendFile() throws JsonProcessingException {
-        File file = new File("ASKmE5_C_20210324_0648_M_KOLARIC_SRB0000036022000.ddd");
+    public void  testSendFile() throws IOException, URISyntaxException {
+        File file = new File("C:\\Users\\Nikola Drljaca\\IdeaProjects\\Askme5DesktopApp\\src\\main\\resources\\ASKmE5_C_20210324_0648_M_KOLARIC_SRB0000036022000.ddd");
         SuccessMessage response = appService.uploadFile(
                 "Marko-Test-Askme5", //todo check where this is initialized
                 "54637281",//TODO check card numer
