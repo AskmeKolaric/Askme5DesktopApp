@@ -3,6 +3,7 @@ package TachografReaderUI.controller;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
 
 import java.io.File;
@@ -40,7 +41,8 @@ public class MainController {
     private void loadMainView() {
         try {
             URL urlDataView = new File("src/main/java/TachografReaderUi/DataView.fxml").toURI().toURL();
-            FXMLLoader loader = new FXMLLoader(urlDataView);
+            URL url = getClass().getResource("/DataView.fxml");
+            FXMLLoader loader = new FXMLLoader(url);
             mainView = loader.load();
             DataViewController controller = loader.getController();
             controller.userProperty().bindBidirectional(
