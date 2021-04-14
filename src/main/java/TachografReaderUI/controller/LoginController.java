@@ -40,7 +40,7 @@ public class LoginController {
     @FXML
     private void ok() throws JsonProcessingException {
 
-        LoginModel loginModel = new LoginModel(email, sifrra);//For testing,use default value for testing
+        LoginModel loginModel = new LoginModel(userNameField.getText(), passwordField.getText());//For testing,use default value for testing
         try {
             String token = appService.login(loginModel);
             System.out.println("TOKEN: " + token);//perform login

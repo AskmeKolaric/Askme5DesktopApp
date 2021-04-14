@@ -40,8 +40,9 @@ public class MainController {
 
     private void loadMainView() {
         try {
-            URL urlDataView = new File("src/main/resources/DataView.fxml").toURI().toURL();
-            FXMLLoader loader = new FXMLLoader(urlDataView);
+            URL urlDataView = new File("src/main/java/TachografReaderUi/DataView.fxml").toURI().toURL();
+            URL url = getClass().getResource("/DataView.fxml");
+            FXMLLoader loader = new FXMLLoader(url);
             mainView = loader.load();
             DataViewController controller = loader.getController();
             controller.userProperty().bindBidirectional(

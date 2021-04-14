@@ -21,7 +21,7 @@ import javafx.scene.control.TextField;
 
 import javax.smartcardio.*;
 
-import net.samuelcampos.usbdrivedetector.USBDeviceDetectorManager;
+//import net.samuelcampos.usbdrivedetector.USBDeviceDetectorManager;
 import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
 import okhttp3.MediaType;
