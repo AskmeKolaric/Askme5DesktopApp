@@ -2,7 +2,6 @@ package TachografReaderUI.controller;
 
 import TachografReaderUI.file.FileDDD;
 import TachografReaderUI.models.SuccessMessage;
-import TachografReaderUI.models.TokenResponse;
 import TachografReaderUI.subBlocks.APDUCommand;
 import TachografReaderUI.models.Fid;
 import TachografReaderUI.models.User;
@@ -21,6 +20,8 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextField;
 
 import javax.smartcardio.*;
+
+import net.samuelcampos.usbdrivedetector.USBDeviceDetectorManager;
 import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
 import okhttp3.MediaType;
@@ -71,6 +72,8 @@ public class DataViewController {
     String fileName;
     SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmm");
 
+//   private USBDeviceDetectorManager driveDetector = new USBDeviceDetectorManager();
+
     @FXML
     public ProgressBar bar;
     public TextField textField;
@@ -79,31 +82,48 @@ public class DataViewController {
 
     private final AppService appService = new AppServiceImpl();
 
+//    public USBDeviceDetectorManager getDriveDetector() {
+//        return driveDetector;
+//    }
+//
+//    public void setDriveDetector(USBDeviceDetectorManager driveDetector) {
+//        this.driveDetector = driveDetector;
+//    }
 
-    public void initialize() throws CardException {
-//        try {
-//            terminals = factory.terminals().list();
-//        } catch (CardException e1) {
-//            text.setText(e1.getMessage());
-//        }
-//        System.out.println("Terminals: " + terminals);
-//        // get the first terminal
-//        if (terminals.size() >= 1) {
-//            terminal = terminals.get(0);
-//            try {
-//                card = terminal.connect("*");
-//            } catch (CardException e1) {
-//                text.setText(e1.getMessage());
-//                e1.printStackTrace();
-//            }
-//            channel = card.getBasicChannel();
-//            text.setText("Card: " + card);
-//            dugme.setDisable(false);
-//            // establish a connection with the card
-//        } else {
-//            text.setText("Card is not present");
-//            textField.setText("Please connect your card Reader");
-//        }
+
+    public void initialize() throws CardException, IOException {
+//
+//        // Display all the USB storage devices currently connected
+//        driveDetector.getRemovableDevices().forEach(System.out::println);
+//
+//// Add an event listener to be notified when an USB storage device is connected or removed
+//        driveDetector.addDriveListener(System.out::println);
+//
+//// Unmount a device
+//        driveDetector.unmountStorageDevice(driveDetector.getRemovableDevices().get(0));
+        try {
+            terminals = factory.terminals().list();
+        } catch (CardException e1) {
+            text.setText(e1.getMessage());
+        }
+        System.out.println("Terminals: " + terminals);
+        // get the first terminal
+        if (terminals.size() >= 1) {
+            terminal = terminals.get(0);
+            try {
+                card = terminal.connect("*");
+            } catch (CardException e1) {
+                text.setText(e1.getMessage());
+                e1.printStackTrace();
+            }
+            channel = card.getBasicChannel();
+            text.setText("Card: " + card);
+            dugme.setDisable(false);
+            // establish a connection with the card
+        } else {
+            text.setText("Card is not present");
+            textField.setText("Please connect your card Reader");
+        }
     }
 
     @FXML
@@ -112,22 +132,22 @@ public class DataViewController {
         System.out.println("out");
     }
 
+//    @FXML
+//    public void  testSendFile() throws JsonProcessingException {
+//        File file = new File("src/main/resources/ASKmE5_C_20210324_0648_M_KOLARIC_SRB0000036022000.ddd");
+//        SuccessMessage response = appService.uploadFile(
+//                "Marko-Test-Askme5-MAC", //todo check where this is initialized
+//                "54637281",//TODO check card numer
+//                "2021.04.01",
+//                file,
+//                user.get().getUserToken());
+//
+//        System.out.println("Message: " + response.getMessage());
+//
+//    }
+
     @FXML
-    public void  testSendFile() throws IOException, URISyntaxException {
-        File file = new File("C:\\Users\\Nikola Drljaca\\IdeaProjects\\Askme5DesktopApp\\src\\main\\resources\\ASKmE5_C_20210324_0648_M_KOLARIC_SRB0000036022000.ddd");
-        SuccessMessage response = appService.uploadFile(
-                "Marko-Test-Askme5", //todo check where this is initialized
-                "54637281",//TODO check card numer
-                "2021.04.01",
-                file,
-                user.get().getUserToken());
-
-        System.out.println("Message: " + response.getMessage());
-
-    }
-
-    @FXML
-    public void readTachografCard() throws Exception {
+    public void readTachographCard() throws Exception {
 
         byte[] headerBlock = new byte[5];
         ResponseAPDU r = null;
@@ -267,7 +287,7 @@ public class DataViewController {
             }
         };
         dugme.setDisable(true);
-//        bar.progressProperty().bind(task.progressProperty());
+        bar.progressProperty().bind(task.progressProperty());
         text.textProperty().bind(task.messageProperty());
         new Thread(task).start();
 
@@ -283,35 +303,37 @@ public class DataViewController {
 
         byte[] timeHex = getTimestampBytes(time);
 
+        String desktop = System.getProperty("user.home") + "/Desktop";
+        File myDirectory = new File(desktop + File.separator + "Tahograf");
+        File file = new File(myDirectory + File.separator + fileName);
+
         try {
             r = channel.transmit(new CommandAPDU(0x00, 0xA4, 0x04, 0x0C, OperationHelper.hexToByteAr("ff,54,41,43,48,4f"), 0x00, 0x06));
             r = channel.transmit(new CommandAPDU(0x00, APDUCommand.SELECT_FILE.getCommand(), 0x02, 0x0C, OperationHelper.hexToByteAr("05,0E"), 0x00, 0x02));
             if (r.getSW1() == 0x90) {
                 r = channel.transmit(new CommandAPDU(0x00, APDUCommand.UPDATE_BINARY.getCommand(), 0x00, 0x00, timeHex, 0x00, 0x04));
                 if (r.getSW1() == 0x90) {
-                    String desktop = System.getProperty("user.home") + "/Desktop";
-                    File myDirectory = new File(desktop + File.separator + "Tahograf");
                     if (!myDirectory.exists() && !myDirectory.isDirectory()) {
                         if (myDirectory.mkdirs()) {
-                            File file = new File(myDirectory + File.separator + fileName);
                             OutputStream stream = new FileOutputStream(file);
                             output.writeTo(stream);
                             System.out.print("NIce job -> Directory \n");
                             }
                         }
                     else {
-                        File file = new File(myDirectory + File.separator + fileName);
                         OutputStream stream = new FileOutputStream(file);
                         output.writeTo(stream);
                         System.out.print("NIce job -> Vec Ima Directory \n");
                     }
                     //TODO check where the request should happen!?
-//                    appService.uploadFile(
-//                            "Marko-Test-Askme5", //todo check where this is initialized
-//                            fileDDD.getCardBlockFile().getIdentification().getCardNumber().toString(),//TODO check card numer
-//                            dateFormat.format(time),
-//                            convertFile(fileName , output.toByteArray()),
-//                            user.get().getUserToken());
+                    SuccessMessage response = appService.uploadFile(
+                            fileDDD.getCardBlockFile().getIdentification().getDriverCardHolderIdentification().getCardHolderName().getHolderFirstNames().charAt(0) + "_" + fileDDD.getCardBlockFile().getIdentification().getDriverCardHolderIdentification().getCardHolderName().getHolderSurname(), //todo check where this is initialized
+                            fileDDD.getCardBlockFile().getIdentification().getCardNumber().toString(),//TODO check card numer
+                            dateFormat.format(time),
+                            file,
+                            user.get().getUserToken());
+
+                    System.out.println("Message-> Slanje fijla na mail: " + response.getMessage());
                 }
             }
         } catch (CardException e1) {

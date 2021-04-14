@@ -88,6 +88,13 @@
 			<version>4.9.1</version>
 		</dependency>
 
+		<!-- https://github.com/samuelcampos/usbdrivedetector -->
+		<dependency>
+			<groupId>net.samuelcampos</groupId>
+			<artifactId>usbdrivedetector</artifactId>
+			<version>2.1.1</version>
+		</dependency>
+
 
 	</dependencies>
 

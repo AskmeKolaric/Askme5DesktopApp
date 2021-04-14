@@ -29,7 +29,8 @@ public class Main extends Application {
     public void start(Stage primaryStage) throws Exception{
 
         try {
-            Parent root = FXMLLoader.load(getClass().getResource("/Main.fxml"));
+            URL url = new File("src/main/resources/Main.fxml").toURI().toURL();
+            Parent root = FXMLLoader.load(url);
             Scene scene = new Scene(root, 800, 575);
             URL url2 = new File("src/main/resources/application.css").toURI().toURL();
             scene.getStylesheets().add(url2.toExternalForm());
@@ -47,7 +48,7 @@ public class Main extends Application {
         Platform.exit();
     }
 
-    public static void main(String[] args) {
+    /*public static void main(String[] args) {
         launch(args);
-    }
+    }*/
 }

@@ -95,13 +95,4 @@ public class AppServiceImpl implements AppService {
         return builder;
     }
 
-//    private MultiValueMap<String, HttpEntity<?>> fromFile(RequestBody name, RequestBody cardNumber, RequestBody date, MultipartBody.Part file) {
-//        MultipartBodyBuilder builder = new MultipartBodyBuilder();
-//        builder.part("ddd", file);
-//        builder.part("name", name);
-//        builder.part("date", date);
-//        builder.part("cardNumber", cardNumber);
-//        return builder.build();
-//    }
-
 }

@@ -11,7 +11,7 @@
             <Label fx:id="text" id="login-label" text="Očitajte vašu karticu">
             </Label>
             <ProgressBar fx:id="bar" progress="0.18" minWidth="600" />
-            <Button onAction="#testSendFile"  fx:id="dugme" text="Go..Go..Go..&gt;" >
+            <Button onAction="#readTachographCard"  fx:id="dugme" text="Go..Go..Go..&gt;" >
             </Button>
             <TextField fx:id="textField" alignment="CENTER" editable="false">
                 <padding>
