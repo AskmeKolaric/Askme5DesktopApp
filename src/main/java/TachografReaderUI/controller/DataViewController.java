@@ -25,13 +25,9 @@ import net.samuelcampos.usbdrivedetector.USBDeviceDetectorManager;
 import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
 import okhttp3.MediaType;
-import org.springframework.core.io.ClassPathResource;
 
 import java.io.*;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
-import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.List;
